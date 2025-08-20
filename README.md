@@ -1,12 +1,34 @@
-🏨 Hệ Thống Backend Đặt Phòng Khách Sạn
+# 🏨 Hệ Thống Backend Đặt Phòng Khách Sạn
 
-Dự án cá nhân: API Backend cho ứng dụng đặt phòng khách sạn
-Mã số sinh viên: 21DH113775
-Trường: Đại học Ngoại Ngữ Tin Học TP.HCM  
+> **Dự án cá nhân**: Hệ thống API Backend cho ứng dụng đặt phòng khách sạn trực tuyến  
+> **Công nghệ**: ASP.NET Core 8.0 | Entity Framework Core | SQL Server
 
+[![.NET Version](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![C# Version](https://img.shields.io/badge/C%23-12.0-239120?logo=c-sharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-2019+-CC2927?logo=microsoft-sql-server)](https://www.microsoft.com/en-us/sql-server)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-🎯 Tổng Quan
-HotelBooking là hệ thống backend API RESTful được xây dựng bằng ASP.NET Core 8.0, hỗ trợ quản lý đặt phòng khách sạn, người dùng, phòng, nội thất, voucher, và ca làm việc nhân viên. Dự án sử dụng JWT để xác thực, Entity Framework Core để quản lý cơ sở dữ liệu SQL Server, và FluentValidation để kiểm tra dữ liệu.
+---
+
+## 🎯 Tổng Quan Dự Án
+
+**HotelBooking Backend** là hệ thống API RESTful được phát triển với **ASP.NET Core 8.0**, cung cấp đầy đủ các chức năng backend cho ứng dụng đặt phòng khách sạn chuyên nghiệp. Dự án được thiết kế với kiến trúc sạch (Clean Architecture), đảm bảo tính mở rộng, bảo trì và hiệu suất cao.
+
+### 🎓 Thông Tin Học Tập
+- **Sinh viên**: Lê Trần Đăng Khoa
+- **Mã số sinh viên**: **21DH113775**
+- **Trường**: Đại Học Ngoại Ngữ TIn Học Thành phố Hồ Chí Minh
+- **Khoa**: Công nghệ Thông tin
+
+### 🌟 Điểm Nổi Bật
+- ✅ **Kiến trúc hiện đại**: Clean Architecture với Dependency Injection
+- ✅ **Bảo mật cao**: JWT Authentication với role-based authorization
+- ✅ **Hiệu suất tối ưu**: Entity Framework Core với Query Optimization
+- ✅ **Validation mạnh mẽ**: FluentValidation cho tất cả input
+- ✅ **Documentation tự động**: Swagger/OpenAPI 3.0
+- ✅ **Code quality**: Tuân thủ SOLID principles và Design patterns
+
+---
 
 ⚡ Tính Năng Chính
 
