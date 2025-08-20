@@ -43,6 +43,11 @@ namespace HotelBooking.Infrastructure.Data
             modelBuilder.Entity<StaffShift>()
                 .HasKey(ss => ss.Id);
 
+            // === Unique Index for RoomNumber ===
+            modelBuilder.Entity<Room>()
+                .HasIndex(r => r.RoomNumber)
+                .IsUnique();
+
             // === Seeding Roles ===
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Admin" },
@@ -63,7 +68,31 @@ namespace HotelBooking.Infrastructure.Data
                     PasswordHash = adminPass,
                     RoleId = 1,
                     IsMember = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = new DateTime(2025, 8, 20, 11, 0, 0, DateTimeKind.Utc)
+                }
+            );
+
+            // === Seed Rooms ===
+            modelBuilder.Entity<Room>().HasData(
+                new Room
+                {
+                    Id = 1,
+                    RoomNumber = "101",
+                    PricePerNight = 1000000,
+                    IsAvailable = true,
+                    Description = "Phòng Standard",
+                    ImageUrl = "/Uploads/room101.jpg",
+                    CreatedAt = new DateTime(2025, 8, 20, 11, 0, 0, DateTimeKind.Utc)
+                },
+                new Room
+                {
+                    Id = 2,
+                    RoomNumber = "102",
+                    PricePerNight = 1500000,
+                    IsAvailable = true,
+                    Description = "Phòng Deluxe",
+                    ImageUrl = "/Uploads/room102.jpg",
+                    CreatedAt = new DateTime(2025, 8, 20, 11, 0, 0, DateTimeKind.Utc)
                 }
             );
 
@@ -83,12 +112,12 @@ namespace HotelBooking.Infrastructure.Data
             // === Seed Drinks ===
             modelBuilder.Entity<Drink>().HasData(
                 new Drink { Id = 1, Name = "Nước suối", Price = 10000, ImageUrl = "/images/drinks/water.jpg" },
-                new Drink { Id = 2, Name = "Cà phê lon", Price = 15000,  ImageUrl = "/images/drinks/coffee.jpg" }
+                new Drink { Id = 2, Name = "Cà phê lon", Price = 15000, ImageUrl = "/images/drinks/coffee.jpg" }
             );
 
             // === Seed Voucher ===
             modelBuilder.Entity<Voucher>().HasData(
-                new Voucher { Id = 1, Code = "GIAM10", Discount = 10, ExpiryDate = DateTime.UtcNow.AddMonths(3), IsActive = true }
+                new Voucher { Id = 1, Code = "GIAM10", Discount = 10, ExpiryDate = new DateTime(2025, 11, 20, 11, 0, 0, DateTimeKind.Utc), IsActive = true }
             );
 
             // === Seed Combo & ComboDetail ===
@@ -99,8 +128,6 @@ namespace HotelBooking.Infrastructure.Data
             modelBuilder.Entity<ComboDetail>().HasData(
                 new ComboDetail { Id = 1, ComboId = 1, RoomId = 1, FurnitureId = 1 }
             );
-
-            // NOTE: Nếu cần seed thêm Room, Booking,... thì cần chắc chắn các Id liên quan đã tồn tại để tránh lỗi.
         }
     }
 }

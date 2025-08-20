@@ -1,6 +1,4 @@
-﻿using FluentValidation.AspNetCore;
-using HotelBooking;
-using HotelBooking.Infrastructure.Data;
+﻿using HotelBooking.Infrastructure.Data;
 using HotelBooking.Modules.Auth.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +7,9 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using FluentValidation.AspNetCore;
 using AutoMapper;
+using HotelBooking.Mappings;
+using HotelBooking;
+using HotelBooking.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    // Thêm mô tả cho Bearer token
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme (Example: 'Bearer {token}')",
@@ -27,7 +27,6 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer"
     });
 
-    // Áp dụng token cho tất cả các endpoint
     options.AddSecurityRequirement(new OpenApiSecurityRequirement()
     {
         {
@@ -74,13 +73,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-//
+// FluentValidation
 builder.Services.AddControllers()
-    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Program>());
+    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<RoomCreateDtoValidator>());
 
-builder.Services.AddAutoMapper(typeof(Program));
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 // Dependency Injection
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -92,9 +104,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // Để truy cập ảnh
-
-app.UseAuthentication();  // <<< CẦN THÊM DÒNG NÀY
+app.UseStaticFiles(); // Phục vụ file tĩnh từ wwwroot (ảnh trong uploads)
+app.UseCors("AllowAll"); // Áp dụng CORS trước Authentication/Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
