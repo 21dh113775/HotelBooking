@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelBooking.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250820110844_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250820135008_MakeCreatedByNonNullable")]
+    partial class MakeCreatedByNonNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace HotelBooking.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("HotelBooking.Domain.Entities.Booking", b =>
+            modelBuilder.Entity("Booking", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -48,7 +48,7 @@ namespace HotelBooking.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("CreatedBy")
+                    b.Property<int>("CreatedBy")
                         .HasColumnType("int");
 
                     b.Property<int>("RoomId")
@@ -286,8 +286,7 @@ namespace HotelBooking.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookingId")
-                        .IsUnique();
+                    b.HasIndex("BookingId");
 
                     b.ToTable("Payments");
                 });
@@ -317,9 +316,12 @@ namespace HotelBooking.Migrations
 
                     b.Property<string>("RoomNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoomNumber")
+                        .IsUnique();
 
                     b.ToTable("Rooms");
 
@@ -327,7 +329,7 @@ namespace HotelBooking.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 8, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(706),
+                            CreatedAt = new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Phòng Standard",
                             ImageUrl = "/Uploads/room101.jpg",
                             IsAvailable = true,
@@ -337,7 +339,7 @@ namespace HotelBooking.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 8, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(707),
+                            CreatedAt = new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Phòng Deluxe",
                             ImageUrl = "/Uploads/room102.jpg",
                             IsAvailable = true,
@@ -434,7 +436,7 @@ namespace HotelBooking.Migrations
                             Id = 1,
                             Code = "GIAM10",
                             Discount = 10,
-                            ExpiryDate = new DateTime(2025, 11, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(956),
+                            ExpiryDate = new DateTime(2025, 11, 20, 11, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true
                         });
                 });
@@ -482,11 +484,11 @@ namespace HotelBooking.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 8, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(602),
+                            CreatedAt = new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@hotel.com",
                             FullName = "Admin",
                             IsMember = false,
-                            PasswordHash = "$2a$11$inCc8qnlebE.1q6xa90pge4dhwWSC2DPNH2FrD9Adxr.Hovwe5QGa",
+                            PasswordHash = "$2a$11$.LFsUROqF99T/Cr2ISx9ce/u9YstXb.iHyjUKh7kRz7GQuu6NHE7m",
                             PhoneNumber = "0123456789",
                             RoleId = 1
                         });
@@ -531,7 +533,7 @@ namespace HotelBooking.Migrations
                         });
                 });
 
-            modelBuilder.Entity("HotelBooking.Domain.Entities.Booking", b =>
+            modelBuilder.Entity("Booking", b =>
                 {
                     b.HasOne("HotelBooking.Domain.Entities.Combo", "Combo")
                         .WithMany()
@@ -558,7 +560,7 @@ namespace HotelBooking.Migrations
 
             modelBuilder.Entity("HotelBooking.Domain.Entities.BookingDrink", b =>
                 {
-                    b.HasOne("HotelBooking.Domain.Entities.Booking", "Booking")
+                    b.HasOne("Booking", "Booking")
                         .WithMany("BookingDrinks")
                         .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -600,9 +602,9 @@ namespace HotelBooking.Migrations
 
             modelBuilder.Entity("HotelBooking.Domain.Entities.Payment", b =>
                 {
-                    b.HasOne("HotelBooking.Domain.Entities.Booking", "Booking")
-                        .WithOne("Payment")
-                        .HasForeignKey("HotelBooking.Domain.Entities.Payment", "BookingId")
+                    b.HasOne("Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -650,11 +652,9 @@ namespace HotelBooking.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("HotelBooking.Domain.Entities.Booking", b =>
+            modelBuilder.Entity("Booking", b =>
                 {
                     b.Navigation("BookingDrinks");
-
-                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("HotelBooking.Domain.Entities.Combo", b =>
