@@ -56,16 +56,23 @@ SQL Server: 2019+ (hoặc LocalDB)
 Công cụ: Visual Studio 2022, Git, Postman
 RAM: 8GB+ (khuyến nghị 16GB)
 
-## 🚀 Hướng Dẫn Cài Đặt
+Đây là code markdown đã được tối ưu hóa, dễ copy không bị lỗi:
+markdown# Hotel Booking System
 
-### 📦 Clone Repository
-```git clone https://github.com/21dh113775/HotelBooking.git```bash
+## Hướng dẫn Cài đặt
+
+### Clone Repository
+git clone https://github.com/21dh113775/HotelBooking.git
 cd HotelBooking
-📚 Cài Đặt Thư Viện
-bashdotnet restore
-🗃️ Cấu Hình Cơ Sở Dữ Liệu
-Tạo tệp appsettings.json:
-json{
+
+### Cài đặt Thư viện
+dotnet restore
+
+### Cấu hình Cơ sở Dữ liệu
+
+Tạo tệp `appsettings.json`:
+```json
+{
   "ConnectionStrings": {
     "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=HotelBookingDB;Trusted_Connection=True;"
   },
@@ -75,39 +82,25 @@ json{
     "Audience": "HotelBookingClient"
   }
 }
-🔄 Chạy Migration
-bashdotnet ef migrations add InitialCreate
+Chạy Migration
+dotnet ef migrations add InitialCreate
 dotnet ef database update
-▶️ Khởi Động Ứng Dụng
-bashdotnet run
-
-📍 Truy cập Swagger tại: https://localhost:<port>/swagger
-
-
-📖 API Chính
-Phương ThứcĐường DẫnMô TảXác ThựcPOST/api/auth/registerĐăng ký tài khoản mới❌ KhôngPOST/api/auth/loginĐăng nhập, nhận JWT token❌ KhôngGET/api/auth/profileXem hồ sơ người dùng✅ JWTGET/api/auth/admin-onlyAPI chỉ dành cho Admin🔐 JWT (Admin)
-
-💡 Ví Dụ Gọi API
-👤 Đăng ký
+Khởi động Ứng dụng
+dotnet run
+Truy cập Swagger tại: https://localhost:<port>/swagger
+API Chính
+Phương ThứcĐường DẫnMô TảXác ThựcPOST/api/auth/registerĐăng ký tài khoản mớiKhôngPOST/api/auth/loginĐăng nhập, nhận JWT tokenKhôngGET/api/auth/profileXem hồ sơ người dùngJWTGET/api/auth/admin-onlyAPI chỉ dành cho AdminJWT (Admin)
+Ví dụ Gọi API
+Đăng ký
 bashcurl -X POST https://localhost:<port>/api/auth/register \
 -H "Content-Type: application/json" \
--d '{
-  "fullName": "Nguyen Van A", 
-  "email": "user@example.com", 
-  "phoneNumber": "0123456789", 
-  "password": "Password@123", 
-  "role": "Customer"
-}'
-🔐 Đăng nhập
+-d '{"fullName": "Nguyen Van A", "email": "user@example.com", "phoneNumber": "0123456789", "password": "Password@123", "role": "Customer"}'
+Đăng nhập
 bashcurl -X POST https://localhost:<port>/api/auth/login \
 -H "Content-Type: application/json" \
--d '{
-  "email": "user@example.com", 
-  "password": "Password@123"
-}'
-
-🗄️ Cấu Trúc Cơ Sở Dữ Liệu
-📊 Bảng Chính
+-d '{"email": "user@example.com", "password": "Password@123"}'
+Cấu trúc Cơ sở Dữ liệu
+Bảng Chính
 
 Users: Lưu thông tin người dùng (Email, PasswordHash, RoleId)
 Rooms: Lưu thông tin phòng (RoomNumber, PricePerNight, IsAvailable)
@@ -115,35 +108,36 @@ Bookings: Lưu thông tin đặt phòng (UserId, RoomId, CheckInDate, TotalAmoun
 Vouchers: Lưu mã giảm giá (Code, Discount, ExpiryDate)
 RoomFurniture: Bảng trung gian cho quan hệ nhiều-nhiều giữa phòng và nội thất
 
-🎯 Dữ Liệu Mẫu
-LoạiChi TiếtTài khoản Adminadmin@hotel.com / Admin@123Vai tròAdmin, Manager, Staff, CustomerNội thấtTV Samsung, Bàn làm việcVoucherMã GIAM10 (giảm 10%)
+Dữ liệu Mẫu
 
-🔧 Hướng Dẫn Phát Triển
-🆕 Thêm Migration
-bashdotnet ef migrations add <TênMigration>
+Tài khoản Admin: admin@hotel.com / Admin@123
+Vai trò: Admin, Manager, Staff, Customer
+Nội thất: TV Samsung, Bàn làm việc
+Voucher: Mã GIAM10 (giảm 10%)
+
+Hướng dẫn Phát triển
+Thêm Migration
+dotnet ef migrations add <TênMigration>
 dotnet ef database update
-🧪 Kiểm tra API
-
+Kiểm tra API
 Sử dụng Postman hoặc Swagger UI
-
-
-🚀 Triển Khai
-🎯 Chuẩn bị
+Triển khai
+Chuẩn bị
 
 Sử dụng Azure, AWS, hoặc VPS (FPT Cloud, Viettel Cloud)
 Cập nhật appsettings.Production.json với chuỗi kết nối SQL Server
 
-🐳 Triển khai với Docker
+Triển khai với Docker
 Tạo Dockerfile:
 dockerfileFROM mcr.microsoft.com/dotnet/aspnet:8.0
 COPY bin/Release/net8.0/publish/ app/
 WORKDIR /app
 ENTRYPOINT ["dotnet", "HotelBooking.dll"]
 Build và chạy:
-bashdotnet publish -c Release
+dotnet publish -c Release
 docker build -t hotel-booking-backend .
 docker run -p 8080:80 hotel-booking-backend
-
+```
 
 🤝 Đóng Góp
 
