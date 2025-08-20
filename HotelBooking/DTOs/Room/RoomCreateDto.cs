@@ -1,14 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
 
-namespace HotelBooking.DTOs.Rom
+namespace HotelBooking.DTOs
 {
     public class RoomCreateDto
     {
-        public string Name { get; set; }
+        public string RoomNumber { get; set; } = string.Empty;
+        public double PricePerNight { get; set; }
+        public bool IsAvailable { get; set; }
         public string? Description { get; set; }
-        public decimal PricePerHour { get; set; }
         public IFormFile? Image { get; set; }
     }
-
-
 }
