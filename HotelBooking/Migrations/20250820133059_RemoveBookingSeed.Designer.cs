@@ -4,6 +4,7 @@ using HotelBooking.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelBooking.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250820133059_RemoveBookingSeed")]
+    partial class RemoveBookingSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace HotelBooking.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Booking", b =>
+            modelBuilder.Entity("HotelBooking.Domain.Entities.Booking", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,7 +48,7 @@ namespace HotelBooking.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedBy")
+                    b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
                     b.Property<int>("RoomId")
@@ -283,7 +286,8 @@ namespace HotelBooking.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookingId");
+                    b.HasIndex("BookingId")
+                        .IsUnique();
 
                     b.ToTable("Payments");
                 });
@@ -485,7 +489,7 @@ namespace HotelBooking.Migrations
                             Email = "admin@hotel.com",
                             FullName = "Admin",
                             IsMember = false,
-                            PasswordHash = "$2a$11$.LFsUROqF99T/Cr2ISx9ce/u9YstXb.iHyjUKh7kRz7GQuu6NHE7m",
+                            PasswordHash = "$2a$11$9mbkuR2C/saRpIXf3a5Xr.WqH8oVYed.WAfLgAmkmpA4OBiDqDzWW",
                             PhoneNumber = "0123456789",
                             RoleId = 1
                         });
@@ -530,7 +534,7 @@ namespace HotelBooking.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Booking", b =>
+            modelBuilder.Entity("HotelBooking.Domain.Entities.Booking", b =>
                 {
                     b.HasOne("HotelBooking.Domain.Entities.Combo", "Combo")
                         .WithMany()
@@ -557,7 +561,7 @@ namespace HotelBooking.Migrations
 
             modelBuilder.Entity("HotelBooking.Domain.Entities.BookingDrink", b =>
                 {
-                    b.HasOne("Booking", "Booking")
+                    b.HasOne("HotelBooking.Domain.Entities.Booking", "Booking")
                         .WithMany("BookingDrinks")
                         .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -599,9 +603,9 @@ namespace HotelBooking.Migrations
 
             modelBuilder.Entity("HotelBooking.Domain.Entities.Payment", b =>
                 {
-                    b.HasOne("Booking", "Booking")
-                        .WithMany()
-                        .HasForeignKey("BookingId")
+                    b.HasOne("HotelBooking.Domain.Entities.Booking", "Booking")
+                        .WithOne("Payment")
+                        .HasForeignKey("HotelBooking.Domain.Entities.Payment", "BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -649,9 +653,11 @@ namespace HotelBooking.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("Booking", b =>
+            modelBuilder.Entity("HotelBooking.Domain.Entities.Booking", b =>
                 {
                     b.Navigation("BookingDrinks");
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("HotelBooking.Domain.Entities.Combo", b =>

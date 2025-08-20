@@ -79,7 +79,7 @@ namespace HotelBooking.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoomNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RoomNumber = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     PricePerNight = table.Column<double>(type: "float", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -335,14 +335,14 @@ namespace HotelBooking.Migrations
                 columns: new[] { "Id", "CreatedAt", "Description", "ImageUrl", "IsAvailable", "PricePerNight", "RoomNumber" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 8, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(706), "Phòng Standard", "/Uploads/room101.jpg", true, 1000000.0, "101" },
-                    { 2, new DateTime(2025, 8, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(707), "Phòng Deluxe", "/Uploads/room102.jpg", true, 1500000.0, "102" }
+                    { 1, new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc), "Phòng Standard", "/Uploads/room101.jpg", true, 1000000.0, "101" },
+                    { 2, new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc), "Phòng Deluxe", "/Uploads/room102.jpg", true, 1500000.0, "102" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Vouchers",
                 columns: new[] { "Id", "Code", "Discount", "ExpiryDate", "IsActive" },
-                values: new object[] { 1, "GIAM10", 10, new DateTime(2025, 11, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(956), true });
+                values: new object[] { 1, "GIAM10", 10, new DateTime(2025, 11, 20, 11, 0, 0, 0, DateTimeKind.Utc), true });
 
             migrationBuilder.InsertData(
                 table: "ComboDetails",
@@ -362,7 +362,21 @@ namespace HotelBooking.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreatedAt", "Email", "FullName", "IsMember", "PasswordHash", "PhoneNumber", "RoleId" },
-                values: new object[] { 1, new DateTime(2025, 8, 20, 11, 8, 43, 986, DateTimeKind.Utc).AddTicks(602), "admin@hotel.com", "Admin", false, "$2a$11$inCc8qnlebE.1q6xa90pge4dhwWSC2DPNH2FrD9Adxr.Hovwe5QGa", "0123456789", 1 });
+                values: new object[] { 1, new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc), "admin@hotel.com", "Admin", false, "$2a$11$A7FwYd/9mZ0XqroXDT30teHG4VzVViKtx67OM.IT62ZKLzBBUEEXe", "0123456789", 1 });
+
+            migrationBuilder.InsertData(
+                table: "Bookings",
+                columns: new[] { "Id", "BookingTime", "CheckIn", "CheckOut", "ComboId", "CreatedAt", "CreatedBy", "RoomId", "Status", "TotalPrice", "UserId" },
+                values: new object[] { 1, new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc), new DateTime(2025, 8, 21, 14, 0, 0, 0, DateTimeKind.Utc), new DateTime(2025, 8, 23, 12, 0, 0, 0, DateTimeKind.Utc), 1, new DateTime(2025, 8, 20, 11, 0, 0, 0, DateTimeKind.Utc), 1, 1, "Confirmed", 2110000m, 1 });
+
+            migrationBuilder.InsertData(
+                table: "BookingDrinks",
+                columns: new[] { "Id", "BookingId", "DrinkId", "Quantity" },
+                values: new object[,]
+                {
+                    { 1, 1, 1, 2 },
+                    { 2, 1, 2, 1 }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookingDrinks_BookingId",
@@ -414,6 +428,12 @@ namespace HotelBooking.Migrations
                 name: "IX_RoomFurnitures_FurnitureId",
                 table: "RoomFurnitures",
                 column: "FurnitureId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Rooms_RoomNumber",
+                table: "Rooms",
+                column: "RoomNumber",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StaffShifts_StaffId",
