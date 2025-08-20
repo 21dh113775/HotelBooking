@@ -56,20 +56,16 @@ SQL Server: 2019+ (hoặc LocalDB)
 Công cụ: Visual Studio 2022, Git, Postman
 RAM: 8GB+ (khuyến nghị 16GB)
 
+## 🚀 Hướng Dẫn Cài Đặt
 
-🚀 Hướng Dẫn Cài Đặt
-
-Clone Repository:
-git clone https://github.com/21dh113775/HotelBooking.git
+### 📦 Clone Repository
+```git clone https://github.com/21dh113775/HotelBooking.git```bash
 cd HotelBooking
-
-
-Cài Đặt Thư Viện:
-dotnet restore
-
-
-Cấu Hình Cơ Sở Dữ Liệu:Tạo tệp appsettings.json:
-{
+📚 Cài Đặt Thư Viện
+bashdotnet restore
+🗃️ Cấu Hình Cơ Sở Dữ Liệu
+Tạo tệp appsettings.json:
+json{
   "ConnectionStrings": {
     "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=HotelBookingDB;Trusted_Connection=True;"
   },
@@ -79,119 +75,74 @@ Cấu Hình Cơ Sở Dữ Liệu:Tạo tệp appsettings.json:
     "Audience": "HotelBookingClient"
   }
 }
-
-
-Chạy Migration:
-dotnet ef migrations add InitialCreate
+🔄 Chạy Migration
+bashdotnet ef migrations add InitialCreate
 dotnet ef database update
+▶️ Khởi Động Ứng Dụng
+bashdotnet run
 
-
-Khởi Động Ứng Dụng:
-dotnet run
-
-Truy cập Swagger tại: https://localhost:<port>/swagger
-
+📍 Truy cập Swagger tại: https://localhost:<port>/swagger
 
 
 📖 API Chính
+Phương ThứcĐường DẫnMô TảXác ThựcPOST/api/auth/registerĐăng ký tài khoản mới❌ KhôngPOST/api/auth/loginĐăng nhập, nhận JWT token❌ KhôngGET/api/auth/profileXem hồ sơ người dùng✅ JWTGET/api/auth/admin-onlyAPI chỉ dành cho Admin🔐 JWT (Admin)
 
-
-
-Phương Thức
-Đường Dẫn
-Mô Tả
-Xác Thực
-
-
-
-POST
-/api/auth/register
-Đăng ký tài khoản mới
-Không
-
-
-POST
-/api/auth/login
-Đăng nhập, nhận JWT token
-Không
-
-
-GET
-/api/auth/profile
-Xem hồ sơ người dùng
-JWT
-
-
-GET
-/api/auth/admin-only
-API chỉ dành cho Admin
-JWT (Admin)
-
-
-Ví Dụ Gọi API
-
-Đăng ký:
-curl -X POST https://localhost:<port>/api/auth/register \
+💡 Ví Dụ Gọi API
+👤 Đăng ký
+bashcurl -X POST https://localhost:<port>/api/auth/register \
 -H "Content-Type: application/json" \
--d '{"fullName": "Nguyen Van A", "email": "user@example.com", "phoneNumber": "0123456789", "password": "Password@123", "role": "Customer"}'
-
-
-Đăng nhập:
-curl -X POST https://localhost:<port>/api/auth/login \
+-d '{
+  "fullName": "Nguyen Van A", 
+  "email": "user@example.com", 
+  "phoneNumber": "0123456789", 
+  "password": "Password@123", 
+  "role": "Customer"
+}'
+🔐 Đăng nhập
+bashcurl -X POST https://localhost:<port>/api/auth/login \
 -H "Content-Type: application/json" \
--d '{"email": "user@example.com", "password": "Password@123"}'
-
-
-
+-d '{
+  "email": "user@example.com", 
+  "password": "Password@123"
+}'
 
 🗄️ Cấu Trúc Cơ Sở Dữ Liệu
-Bảng Chính
+📊 Bảng Chính
 
-Users: Lưu thông tin người dùng (Email, PasswordHash, RoleId).
-Rooms: Lưu thông tin phòng (RoomNumber, PricePerNight, IsAvailable).
-Bookings: Lưu thông tin đặt phòng (UserId, RoomId, CheckInDate, TotalAmount).
-Vouchers: Lưu mã giảm giá (Code, Discount, ExpiryDate).
-RoomFurniture: Bảng trung gian cho quan hệ nhiều-nhiều giữa phòng và nội thất.
+Users: Lưu thông tin người dùng (Email, PasswordHash, RoleId)
+Rooms: Lưu thông tin phòng (RoomNumber, PricePerNight, IsAvailable)
+Bookings: Lưu thông tin đặt phòng (UserId, RoomId, CheckInDate, TotalAmount)
+Vouchers: Lưu mã giảm giá (Code, Discount, ExpiryDate)
+RoomFurniture: Bảng trung gian cho quan hệ nhiều-nhiều giữa phòng và nội thất
 
-Dữ Liệu Mẫu
-
-Tài khoản Admin: admin@hotel.com / Admin@123
-Vai trò: Admin, Manager, Staff, Customer
-Nội thất: TV Samsung, Bàn làm việc
-Voucher: Mã GIAM10 (giảm 10%)
-
+🎯 Dữ Liệu Mẫu
+LoạiChi TiếtTài khoản Adminadmin@hotel.com / Admin@123Vai tròAdmin, Manager, Staff, CustomerNội thấtTV Samsung, Bàn làm việcVoucherMã GIAM10 (giảm 10%)
 
 🔧 Hướng Dẫn Phát Triển
-
-Thêm Migration:
-dotnet ef migrations add <TênMigration>
+🆕 Thêm Migration
+bashdotnet ef migrations add <TênMigration>
 dotnet ef database update
+🧪 Kiểm tra API
 
-
-Kiểm tra API: Sử dụng Postman hoặc Swagger UI.
-
+Sử dụng Postman hoặc Swagger UI
 
 
 🚀 Triển Khai
+🎯 Chuẩn bị
 
-Chuẩn bị:
+Sử dụng Azure, AWS, hoặc VPS (FPT Cloud, Viettel Cloud)
+Cập nhật appsettings.Production.json với chuỗi kết nối SQL Server
 
-Sử dụng Azure, AWS, hoặc VPS (FPT Cloud, Viettel Cloud).
-Cập nhật appsettings.Production.json với chuỗi kết nối SQL Server.
-
-
-Triển khai với Docker:Tạo Dockerfile:
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+🐳 Triển khai với Docker
+Tạo Dockerfile:
+dockerfileFROM mcr.microsoft.com/dotnet/aspnet:8.0
 COPY bin/Release/net8.0/publish/ app/
 WORKDIR /app
 ENTRYPOINT ["dotnet", "HotelBooking.dll"]
-
 Build và chạy:
-dotnet publish -c Release
+bashdotnet publish -c Release
 docker build -t hotel-booking-backend .
 docker run -p 8080:80 hotel-booking-backend
-
-
 
 
 🤝 Đóng Góp
