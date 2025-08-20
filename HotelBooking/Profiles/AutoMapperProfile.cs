@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using HotelBooking.Domain.Entities;
+using HotelBooking.DTOs;
 using HotelBooking.DTOs.Booking;
 using HotelBooking.DTOs.Combo;
 using HotelBooking.DTOs.Drink;
 using HotelBooking.DTOs.Furniture;
-using HotelBooking.DTOs.Rom;
 using HotelBooking.DTOs.Room;
 using HotelBooking.Modules.Entity_Models;
 
