@@ -1,13 +1,18 @@
-﻿using HotelBooking.DTOs.Auth;
+﻿using HotelBooking.Domain.Entities;
 using HotelBooking.Infrastructure.Data;
-using HotelBooking.Modules.Auth.DTOs;
-using HotelBooking.Modules.Entity_Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
+using BCrypt.Net;
+using HotelBooking.DTOs.Auth;
+using HotelBooking.Modules.Entity_Models;
+using HotelBooking.DTOs;
+using HotelBooking.Modules.Auth.DTOs;
 
 namespace HotelBooking.Modules.Auth.Services
 {
@@ -55,7 +60,12 @@ namespace HotelBooking.Modules.Auth.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return await GenerateJwtTokenAsync(user);
+            // Load the user with role to generate token
+            var userWithRole = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == user.Id);
+
+            return await GenerateJwtTokenAsync(userWithRole!);
         }
 
         public async Task<string> LoginAsync(LoginDTO dto)
@@ -71,31 +81,90 @@ namespace HotelBooking.Modules.Auth.Services
 
         private async Task<string> GenerateJwtTokenAsync(User user)
         {
-            // Get role name
-            var roleName = await _context.Roles
-                .Where(r => r.Id == user.RoleId)
-                .Select(r => r.Name)
-                .FirstOrDefaultAsync();
-
-            var claims = new[]
+            try
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, roleName)
-            };
+                // Ensure role is loaded
+                if (user.Role == null)
+                {
+                    user.Role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
+                }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var roleName = user.Role?.Name ?? "Customer";
 
-            var token = new JwtSecurityToken(
-                issuer: _config["JwtSettings:Issuer"],
-                audience: _config["JwtSettings:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(3),
-                signingCredentials: creds
-            );
+                // Create claims - using standard claim types
+                var claims = new List<Claim>
+                {
+                    new Claim("sub", user.Id.ToString()), // Subject - user ID
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.FullName),
+                    new Claim(ClaimTypes.Role, roleName),
+                    new Claim("userId", user.Id.ToString()), // Additional userId claim for safety
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+                };
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                // Log claims for debugging
+                Console.WriteLine($"Generating JWT for user ID: {user.Id}");
+                Console.WriteLine("JWT claims: " + string.Join(", ", claims.Select(c => $"{c.Type}={c.Value}")));
+
+                var jwtSettings = _config.GetSection("JwtSettings");
+                var secretKey = jwtSettings["Key"];
+
+                if (string.IsNullOrEmpty(secretKey))
+                {
+                    throw new Exception("JWT Key not configured properly");
+                }
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.UtcNow.AddHours(24), // Extended to 24 hours for testing
+                    Issuer = jwtSettings["Issuer"],
+                    Audience = jwtSettings["Audience"],
+                    SigningCredentials = creds
+                };
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var tokenString = tokenHandler.WriteToken(token);
+
+                Console.WriteLine($"Generated JWT: {tokenString}");
+
+                // Verify the token we just created
+                try
+                {
+                    var principal = tokenHandler.ValidateToken(tokenString, new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidAudience = jwtSettings["Audience"],
+                        IssuerSigningKey = key,
+                        ClockSkew = TimeSpan.Zero
+                    }, out SecurityToken validatedToken);
+
+                    var subClaim = principal.FindFirst("sub")?.Value;
+                    Console.WriteLine($"Token validation successful. Sub claim: {subClaim}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Token validation failed: {ex.Message}");
+                }
+
+                return tokenString;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating JWT: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw new Exception($"Failed to generate JWT token: {ex.Message}");
+            }
         }
     }
 }
