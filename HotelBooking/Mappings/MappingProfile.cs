@@ -2,6 +2,8 @@
 using HotelBooking.Domain.Entities;
 using HotelBooking.DTOs;
 using HotelBooking.DTOs.Booking;
+using HotelBooking.Modules.Auth.DTOs;
+using HotelBooking.Modules.Entity_Models;
 
 namespace HotelBooking.Mappings
 {

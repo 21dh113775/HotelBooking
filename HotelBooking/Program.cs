@@ -16,13 +16,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve; // Sửa cycle JSON
-    options.JsonSerializerOptions.MaxDepth = 64; // Tăng depth nếu cần
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve; // Đảm bảo xử lý chu kỳ toàn cục
+    options.JsonSerializerOptions.MaxDepth = 128; // Tăng độ sâu tối đa để tránh cắt chu kỳ
+    options.JsonSerializerOptions.WriteIndented = true; // Dễ đọc khi debug
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    // Thêm mô tả cho Bearer token
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme (Example: 'Bearer {token}')",
@@ -31,8 +31,6 @@ builder.Services.AddSwaggerGen(options =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-
-    // Áp dụng token cho tất cả các endpoint
     options.AddSecurityRequirement(new OpenApiSecurityRequirement()
     {
         {
@@ -51,17 +49,11 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-
-// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// JWT Settings
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 builder.Services.Configure<JwtSettings>(jwtSettings);
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
-
-// Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -76,20 +68,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
-
 builder.Services.AddAuthorization();
-
-// FluentValidation
 builder.Services.AddControllers()
     .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Program>());
-
-// AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-
-// Dependency Injection
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -102,19 +85,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseCors("AllowAll"); // Thêm dòng này trước UseRouting
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // Để truy cập ảnh
+app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.Run();
