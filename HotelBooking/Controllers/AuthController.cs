@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using HotelBooking.DTOs;
 using HotelBooking.Modules.Auth.DTOs;
 
-
 namespace HotelBooking.Controllers
 {
     [Route("api/[controller]")]
@@ -66,7 +65,6 @@ namespace HotelBooking.Controllers
         {
             try
             {
-                // Log all claims for debugging
                 Console.WriteLine("=== JWT Claims Debug ===");
                 foreach (var claim in User.Claims)
                 {
@@ -74,44 +72,25 @@ namespace HotelBooking.Controllers
                 }
                 Console.WriteLine("========================");
 
-                // Try multiple ways to get user ID
-                string? userIdStr = null;
-
-                // Try 'sub' claim first (standard)
-                userIdStr = User.FindFirst("sub")?.Value;
-                if (string.IsNullOrEmpty(userIdStr))
-                {
-                    // Try ClaimTypes.NameIdentifier
-                    userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                }
-                if (string.IsNullOrEmpty(userIdStr))
-                {
-                    // Try custom 'userId' claim
-                    userIdStr = User.FindFirst("userId")?.Value;
-                }
-
+                string? userIdStr = User.FindFirst("sub")?.Value ??
+                                   User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                                   User.FindFirst("userId")?.Value;
                 Console.WriteLine($"Retrieved userIdStr: {userIdStr}");
-
                 if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
                 {
                     Console.WriteLine($"Failed to parse user ID. userIdStr = '{userIdStr}'");
                     return Unauthorized(new { message = "Invalid or missing user ID in token." });
                 }
-
                 Console.WriteLine($"Parsed userId: {userId}");
-
                 var user = await _context.Users
                     .Include(u => u.Role)
                     .FirstOrDefaultAsync(u => u.Id == userId);
-
                 if (user == null)
                 {
                     Console.WriteLine($"User not found with ID: {userId}");
                     return NotFound(new { message = "User not found." });
                 }
-
                 Console.WriteLine($"User found: {user.Email}, Role: {user.Role?.Name}");
-
                 var response = new
                 {
                     id = user.Id,
@@ -120,8 +99,7 @@ namespace HotelBooking.Controllers
                     phoneNumber = user.PhoneNumber,
                     role = user.Role?.Name ?? "Customer"
                 };
-
-                Console.WriteLine($"Profile response: {System.Text.Json.JsonSerializer.Serialize(response)}");
+                Console.WriteLine($"Profile response: ${System.Text.Json.JsonSerializer.Serialize(response)}");
                 return Ok(response);
             }
             catch (Exception ex)
@@ -143,7 +121,6 @@ namespace HotelBooking.Controllers
             return Ok("Chỉ admin mới truy cập được");
         }
 
-        // Debug endpoint to check token
         [HttpGet("debug-token")]
         [Authorize]
         public IActionResult DebugToken()

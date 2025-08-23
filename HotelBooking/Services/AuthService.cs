@@ -39,13 +39,12 @@ namespace HotelBooking.Modules.Auth.Services
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
                 throw new Exception("Email đã được sử dụng.");
 
-            // Find role by name
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == dto.Role);
+            // Find role by RoleId
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == dto.RoleId);
             if (role == null) throw new Exception("Vai trò không hợp lệ.");
 
             // Hash password
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
             var user = new User
             {
                 FullName = dto.FullName,
@@ -54,9 +53,8 @@ namespace HotelBooking.Modules.Auth.Services
                 PasswordHash = hashedPassword,
                 IsMember = false,
                 CreatedAt = DateTime.UtcNow,
-                RoleId = role.Id
+                RoleId = dto.RoleId
             };
-
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
@@ -64,7 +62,6 @@ namespace HotelBooking.Modules.Auth.Services
             var userWithRole = await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == user.Id);
-
             return await GenerateJwtTokenAsync(userWithRole!);
         }
 
@@ -72,7 +69,6 @@ namespace HotelBooking.Modules.Auth.Services
         {
             var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null) throw new Exception("Email hoặc mật khẩu không đúng.");
-
             var passwordMatch = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
             if (!passwordMatch) throw new Exception("Email hoặc mật khẩu không đúng.");
 
@@ -88,37 +84,41 @@ namespace HotelBooking.Modules.Auth.Services
                 {
                     user.Role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
                 }
-
                 var roleName = user.Role?.Name ?? "Customer";
+                Console.WriteLine($"Generating token for user ${user.Email} with role ${roleName}");
 
-                // Create claims - using standard claim types
+                // Chỉ gán role "Admin" nếu RoleId = 1
                 var claims = new List<Claim>
                 {
-                    new Claim("sub", user.Id.ToString()), // Subject - user ID
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, user.FullName),
-                    new Claim(ClaimTypes.Role, roleName),
-                    new Claim("userId", user.Id.ToString()), // Additional userId claim for safety
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+                    new Claim(ClaimTypes.Name, user.FullName)
                 };
+                if (user.RoleId == 1) // Admin
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+                }
+                else if (user.RoleId == 3) // Staff
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "Staff"));
+                }
+                else
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "Customer"));
+                }
+                claims.Add(new Claim("userId", user.Id.ToString()));
+                claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+                claims.Add(new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64));
 
-                // Log claims for debugging
-                Console.WriteLine($"Generating JWT for user ID: {user.Id}");
                 Console.WriteLine("JWT claims: " + string.Join(", ", claims.Select(c => $"{c.Type}={c.Value}")));
-
                 var jwtSettings = _config.GetSection("JwtSettings");
                 var secretKey = jwtSettings["Key"];
-
                 if (string.IsNullOrEmpty(secretKey))
                 {
                     throw new Exception("JWT Key not configured properly");
                 }
-
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
@@ -127,14 +127,11 @@ namespace HotelBooking.Modules.Auth.Services
                     Audience = jwtSettings["Audience"],
                     SigningCredentials = creds
                 };
-
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 var tokenString = tokenHandler.WriteToken(token);
-
                 Console.WriteLine($"Generated JWT: {tokenString}");
 
-                // Verify the token we just created
                 try
                 {
                     var principal = tokenHandler.ValidateToken(tokenString, new TokenValidationParameters
@@ -148,7 +145,6 @@ namespace HotelBooking.Modules.Auth.Services
                         IssuerSigningKey = key,
                         ClockSkew = TimeSpan.Zero
                     }, out SecurityToken validatedToken);
-
                     var subClaim = principal.FindFirst("sub")?.Value;
                     Console.WriteLine($"Token validation successful. Sub claim: {subClaim}");
                 }
@@ -156,7 +152,6 @@ namespace HotelBooking.Modules.Auth.Services
                 {
                     Console.WriteLine($"Token validation failed: {ex.Message}");
                 }
-
                 return tokenString;
             }
             catch (Exception ex)
