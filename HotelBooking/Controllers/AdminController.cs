@@ -4,14 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelBooking.Infrastructure.Data;
 using HotelBooking.Domain.Entities;
-using HotelBooking.Modules.Entity_Models;
-using HotelBooking.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using HotelBooking.DTOs;
 using AutoMapper;
 using System.IO;
 using System.Text.Json;
 using System.Linq;
 using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+using HotelBooking.DTOs.Room;
+using HotelBooking.Modules.Entity_Models;
 
 namespace HotelBooking.Controllers
 {
@@ -43,7 +46,7 @@ namespace HotelBooking.Controllers
                         FullName = u.FullName,
                         Email = u.Email,
                         PhoneNumber = u.PhoneNumber,
-                        RoleName = u.Role.Name // Tránh chu kỳ bằng cách chỉ lấy tên role
+                        RoleName = u.Role.Name
                     })
                     .ToListAsync();
                 var options = new JsonSerializerOptions
@@ -52,9 +55,9 @@ namespace HotelBooking.Controllers
                     MaxDepth = 128,
                     WriteIndented = true
                 };
-                var jsonString = JsonSerializer.Serialize(users, options); // Serialize với options trực tiếp
+                var jsonString = JsonSerializer.Serialize(users, options);
                 Console.WriteLine($"GetUsers response body: ${jsonString}");
-                return Ok(users); // Trả về List<UserDto>
+                return Ok(users);
             }
             catch (Exception ex)
             {
@@ -106,7 +109,14 @@ namespace HotelBooking.Controllers
             {
                 if (await _context.Rooms.AnyAsync(r => r.RoomNumber == dto.RoomNumber))
                     return BadRequest(new { message = $"Số phòng {dto.RoomNumber} đã tồn tại." });
-                var room = _mapper.Map<Room>(dto);
+                var room = new Room
+                {
+                    RoomNumber = dto.RoomNumber,
+                    PricePerNight = dto.PricePerNight,
+                    IsAvailable = dto.IsAvailable,
+                    Description = dto.Description,
+                    ImageUrl = dto.Image != null ? "/Uploads/" + Guid.NewGuid() + Path.GetExtension(dto.Image.FileName) : null
+                };
                 if (dto.Image != null)
                 {
                     var uploadsDir = Path.Combine(_env.WebRootPath ?? Directory.GetCurrentDirectory(), "wwwroot", "Uploads");
@@ -125,6 +135,39 @@ namespace HotelBooking.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Lỗi khi tạo phòng.", error = ex.Message });
+            }
+        }
+
+        [HttpPut("rooms/{id}")]
+        public async Task<IActionResult> UpdateRoom(int id, [FromForm] RoomUpdateDto dto)
+        {
+            try
+            {
+                var room = await _context.Rooms.FindAsync(id);
+                if (room == null) return NotFound(new { message = "Phòng không tìm thấy." });
+
+                room.RoomNumber = dto.RoomNumber;
+                room.PricePerNight = dto.PricePerNight;
+                room.IsAvailable = dto.IsAvailable;
+                room.Description = dto.Description;
+
+                if (dto.Image != null)
+                {
+                    var uploadsDir = Path.Combine(_env.WebRootPath ?? Directory.GetCurrentDirectory(), "wwwroot", "Uploads");
+                    Directory.CreateDirectory(uploadsDir);
+                    var imageName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+                    var path = Path.Combine(uploadsDir, imageName);
+                    using var stream = new FileStream(path, FileMode.Create);
+                    await dto.Image.CopyToAsync(stream);
+                    room.ImageUrl = "/Uploads/" + imageName;
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(room);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi cập nhật phòng.", error = ex.Message });
             }
         }
 
@@ -225,11 +268,114 @@ namespace HotelBooking.Controllers
             }
         }
 
+        [HttpGet("staff")]
+        public async Task<IActionResult> GetStaffs()
+        {
+            try
+            {
+                var authHeader = Request.Headers["Authorization"].ToString();
+                Console.WriteLine($"Received token: ${authHeader}");
+                var staffs = await _context.Users
+                    .Where(u => u.RoleId == 3) // Giả sử RoleId=3 là Staff
+                    .Select(u => new
+                    {
+                        u.Id,
+                        FullName = u.FullName,
+                        Email = u.Email,
+                        PhoneNumber = u.PhoneNumber
+                    })
+                    .ToListAsync();
+                return Ok(staffs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi lấy danh sách nhân viên.", error = ex.Message });
+            }
+        }
+
+        [HttpPost("staff")]
+        public async Task<IActionResult> CreateStaff([FromBody] StaffCreateDto dto)
+        {
+            try
+            {
+                var authHeader = Request.Headers["Authorization"].ToString();
+                Console.WriteLine($"Received token: ${authHeader}, Body: ${JsonSerializer.Serialize(dto)}");
+                if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                    return BadRequest(new { message = "Email đã tồn tại." });
+
+                var user = new User
+                {
+                    FullName = dto.FullName,
+                    Email = dto.Email,
+                    PhoneNumber = dto.PhoneNumber,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                    RoleId = 3 // Staff role
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Tạo staff thành công.", id = user.Id });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi tạo staff.", error = ex.Message });
+            }
+        }
+
+        [HttpPut("staff/{id}")]
+        public async Task<IActionResult> UpdateStaff(int id, [FromBody] StaffCreateDto dto)
+        {
+            try
+            {
+                var authHeader = Request.Headers["Authorization"].ToString();
+                Console.WriteLine($"Received token: ${authHeader}, Body: ${JsonSerializer.Serialize(dto)}");
+                var user = await _context.Users.FindAsync(id);
+                if (user == null) return NotFound(new { message = "Staff không tìm thấy." });
+                if (user.RoleId != 3) return BadRequest(new { message = "Không phải staff." });
+                if (await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
+                    return BadRequest(new { message = "Email đã tồn tại." });
+
+                user.FullName = dto.FullName;
+                user.Email = dto.Email;
+                user.PhoneNumber = dto.PhoneNumber;
+                if (!string.IsNullOrEmpty(dto.Password))
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Cập nhật staff thành công.", id = user.Id });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi cập nhật staff.", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("staff/{id}")]
+        public async Task<IActionResult> DeleteStaff(int id)
+        {
+            try
+            {
+                var authHeader = Request.Headers["Authorization"].ToString();
+                Console.WriteLine($"Received token: ${authHeader}");
+                var user = await _context.Users.FindAsync(id);
+                if (user == null) return NotFound(new { message = "Staff không tìm thấy." });
+                if (user.RoleId != 3) return BadRequest(new { message = "Không phải staff." });
+                if (await _context.StaffShifts.AnyAsync(s => s.StaffId == id))
+                    return BadRequest(new { message = "Không thể xóa staff có ca làm việc." });
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Xóa staff thành công." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi xóa staff.", error = ex.Message });
+            }
+        }
+
         [HttpGet("users/raw")]
         public IActionResult GetUsersRaw()
         {
             var users = _context.Users.Include(u => u.Role).ToList();
             return Ok(users);
         }
+
     }
 }
